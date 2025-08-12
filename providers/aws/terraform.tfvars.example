@@ -1,0 +1,14 @@
+# Example Terraform variables file
+# Copy this file to terraform.tfvars and fill in your configuration
+# Never commit terraform.tfvars to version control!
+
+aws_region = "us-east-1"
+
+# Option 1: Use AWS Profile (RECOMMENDED)
+# Configure your AWS credentials using: aws configure --profile your-profile-name
+aws_profile = "mvseng-learning-tf"  # or "your-profile-name"
+
+# Option 2: Use Access Keys (NOT RECOMMENDED for production)
+# Uncomment and fill these if you prefer to use access keys directly
+# aws_access_key = "YOUR_AWS_ACCESS_KEY_HERE"
+# aws_secret_key = "YOUR_AWS_SECRET_KEY_HERE"
