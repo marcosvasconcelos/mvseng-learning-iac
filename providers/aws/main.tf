@@ -1,4 +1,3 @@
-# Define the AWS provider
 provider "aws" {
   region     = var.aws_region
   profile    = var.aws_profile
@@ -6,7 +5,6 @@ provider "aws" {
   secret_key = var.aws_secret_key
 }
 
-# Create a VPC for the instances
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
@@ -14,12 +12,10 @@ resource "aws_vpc" "main" {
   tags                 = { Name = "my-vpc-dev" }
 }
 
-# Data source to get available AZs
 data "aws_availability_zones" "available" {
   state = "available"
 }
 
-# Create public subnets in different AZs
 resource "aws_subnet" "public" {
   count = 2
 
@@ -34,13 +30,11 @@ resource "aws_subnet" "public" {
   }
 }
 
-# Create an Internet Gateway for the VPC
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
   tags   = { Name = "my-internet-gateway-dev" }
 }
 
-# Create the route table and associate the Internet Gateway
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
   route {
@@ -49,7 +43,6 @@ resource "aws_route_table" "public" {
   }
 }
 
-# Associate the route table with the public subnets
 resource "aws_route_table_association" "public_association" {
   count = length(aws_subnet.public)
 
@@ -57,7 +50,6 @@ resource "aws_route_table_association" "public_association" {
   route_table_id = aws_route_table.public.id
 }
 
-# Dynamically fetch the latest Amazon Linux 2 AMI for the selected region
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
@@ -73,7 +65,6 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
-# Create security groups (shared across instances)
 resource "aws_security_group" "http_sg" {
   name        = "http-sg"
   description = "Allow HTTP traffic"
@@ -126,7 +117,6 @@ resource "aws_security_group" "ec2_sg" {
   }
 }
 
-# Security group for Application Load Balancer
 resource "aws_security_group" "alb_sg" {
   name        = "alb-sg"
   description = "Security group for Application Load Balancer"
@@ -161,7 +151,6 @@ resource "aws_security_group" "alb_sg" {
   }
 }
 
-# Application Load Balancer
 resource "aws_lb" "main" {
   name               = "my-alb-dev"
   internal           = false
@@ -177,14 +166,12 @@ resource "aws_lb" "main" {
   }
 }
 
-# Target Group for EC2 instances
 resource "aws_lb_target_group" "web_servers" {
   name     = "web-servers-tg"
   port     = 80
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id
 
-  # Health check configuration
   health_check {
     enabled             = true
     healthy_threshold   = 2
@@ -197,7 +184,6 @@ resource "aws_lb_target_group" "web_servers" {
     protocol            = "HTTP"
   }
 
-  # Target group attributes
   target_type = "instance"
 
   tags = {
@@ -206,7 +192,6 @@ resource "aws_lb_target_group" "web_servers" {
   }
 }
 
-# Load Balancer Listener
 resource "aws_lb_listener" "web" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
@@ -222,23 +207,18 @@ resource "aws_lb_listener" "web" {
   }
 }
 
-# Create two EC2 instances, calling the module twice
 module "aws_instance" {
   source = "../../modules/aws/ec2_instance"
+  count  = 2
 
-  # Use the `count` function to create 2 instances
-  count = 2
-
-  # Dynamic AMI ID for Amazon Linux 2
   ami_id             = data.aws_ami.amazon_linux.id
   instance_type      = "t2.micro"
   instance_name      = "web-server-${count.index + 1}"
   vpc_id             = aws_vpc.main.id
-  subnet_id          = aws_subnet.public[count.index].id # Distribute across AZs
+  subnet_id          = aws_subnet.public[count.index].id
   security_group_ids = [aws_security_group.ec2_sg.id, aws_security_group.http_sg.id]
 }
 
-# Target Group Attachments - Register EC2 instances with Target Group
 resource "aws_lb_target_group_attachment" "web_servers" {
   count = length(module.aws_instance)
 
@@ -247,27 +227,19 @@ resource "aws_lb_target_group_attachment" "web_servers" {
   port             = 80
 }
 
-# Output to show the public IPs of the instances
 output "web_server_ips" {
-  description = "List of public IPs of web_server instances"
-  value       = module.aws_instance.*.public_ip
+  value = module.aws_instance.*.public_ip
 }
 
-# Output to show the DNS of the Load Balancer
 output "load_balancer_dns" {
-  description = "DNS name of the Application Load Balancer"
-  value       = aws_lb.main.dns_name
+  value = aws_lb.main.dns_name
 }
 
-# Output to show the used AZs
 output "availability_zones" {
-  description = "Availability Zones being used"
-  value       = data.aws_availability_zones.available.names
+  value = data.aws_availability_zones.available.names
 }
 
-# Output to show the subnets and their AZs
 output "subnet_info" {
-  description = "Information about subnets and their AZs"
   value = {
     for i, subnet in aws_subnet.public :
     subnet.tags.Name => {
