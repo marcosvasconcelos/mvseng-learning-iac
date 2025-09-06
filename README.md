@@ -1,5 +1,7 @@
 # mvseng-learning-iac
 
+![Terraform CI](https://github.com/marcosvasconcelos/mvseng-learning-iac/actions/workflows/terraform-ci.yml/badge.svg)
+
 ## Overview
 
 Infrastructure as Code learning repository with examples and labs using Terraform on AWS.
@@ -219,6 +221,15 @@ terraform destroy
 ## Contributing
 
 Suggestions and fixes are welcome.
+
+## CI/CD
+
+- GitHub Actions runs Terraform checks on every push/PR to `main`.
+- What it does:
+    - terraform fmt -check -recursive (repo root)
+    - terraform init -backend=false (in `providers/aws`)
+    - terraform validate (in `providers/aws`)
+- No cloud credentials are required; the backend is disabled for validation.
 
 ## Support
 

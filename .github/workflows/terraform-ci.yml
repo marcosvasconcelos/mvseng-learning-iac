@@ -1,0 +1,40 @@
+name: Terraform CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**/*.tf'
+      - '.github/workflows/terraform-ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**/*.tf'
+      - '.github/workflows/terraform-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: fmt + validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: latest
+
+      - name: Terraform fmt (repo root)
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init (providers/aws)
+        working-directory: providers/aws
+        run: terraform init -backend=false -input=false
+
+      - name: Terraform validate (providers/aws)
+        working-directory: providers/aws
+        run: terraform validate -no-color

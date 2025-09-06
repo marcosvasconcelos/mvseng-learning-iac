@@ -2,7 +2,7 @@
 # Script to create AWS key pair if it doesn't exist
 # Usage: ./create-keypair.sh
 
-KEY_NAME="my-key"
+KEY_NAME="my-key-mac"
 AWS_PROFILE="mvseng-learning-tf"
 AWS_REGION="us-east-1"
 KEY_FILE="$HOME/.ssh/${KEY_NAME}.pem"
