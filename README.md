@@ -224,7 +224,7 @@ Suggestions and fixes are welcome.
 
 ## CI/CD
 
-- GitHub Actions runs Terraform checks on every push/PR to `main`.
+- GitHub Actions runs Terraform checks on every push and pull request on any branch (and supports manual runs).
 - What it does:
     - terraform fmt -check -recursive (repo root)
     - terraform init -backend=false (in `providers/aws`)
